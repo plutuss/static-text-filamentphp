@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<phpunit bootstrap="vendor/autoload.php" cacheResult="false" colors="true">
+    <php>
+        <env name="COMPOSER_VENDOR_DIR" value="vendor"/>
+    </php>
+    <testsuites>
+        <testsuite name="Static Text for Filament">
+            <directory>tests</directory>
+        </testsuite>
+    </testsuites>
+</phpunit>

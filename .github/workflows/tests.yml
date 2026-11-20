@@ -1,0 +1,24 @@
+name: Tests
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  integration:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        filament: ['^4.0', '^5.0']
+        php: ['8.2', '8.4']
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          extensions: dom, intl, mbstring, pdo_sqlite
+          coverage: none
+      - run: composer validate --strict
+      - run: composer update --with 'filament/filament:${{ matrix.filament }}' --prefer-dist --no-interaction
+      - run: composer test
