@@ -1,6 +1,6 @@
 # Static Text for Filament
 
-Manage the pages and content blocks from `plutuss/static-text-laravel` in a Filament panel. The plugin uses the original Eloquent models and tables. Existing records appear as soon as you enable the plugin.
+Manage pages, SEO metadata, and localized content blocks in a Filament panel with `plutuss/static-text-filamentphp`. The plugin reads and writes the existing Eloquent models and tables from Static Text Laravel, so you can edit content your application already renders.
 
 ## Requirements
 
@@ -8,16 +8,22 @@ Manage the pages and content blocks from `plutuss/static-text-laravel` in a Fila
 - Filament 4 or 5 with a configured panel
 - Static Text Laravel 2.x on Laravel 11 or 12
 
-## Install from a local checkout
+## Installation
 
-In the Laravel application that hosts the Filament panel, register this checkout as a Composer path repository and require the plugin.
+Run Composer in the Laravel application that hosts your Filament panel. If a tagged release is available in your Composer repositories, install it with:
 
 ```sh
-composer config repositories.static-text-filament path /Users/developer/Projects/static-text-filamentphp
+composer require plutuss/static-text-filamentphp
+```
+
+For development with a local checkout, register it as a path repository. Replace the example path with the path from your application to the checkout.
+
+```sh
+composer config repositories.static-text-filament path ../static-text-filamentphp
 composer require 'plutuss/static-text-filamentphp:*@dev'
 ```
 
-If Composer cannot resolve Static Text Laravel 2.x from Packagist, register the upstream Git repository and rerun the require command.
+If Composer cannot resolve Static Text Laravel 2.x, register its upstream Git repository in the host application and rerun the installation command.
 
 ```sh
 composer config repositories.static-text-core vcs https://github.com/plutuss/static-text.git
@@ -37,7 +43,7 @@ php artisan vendor:publish --tag=static-text-page-item-index
 php artisan migrate
 ```
 
-## Open the admin panel
+## Panel configuration
 
 Laravel discovers the plugin's service provider. The **Static Text** group appears automatically in the Filament panel with ID `admin`. Open **Pages** or **Blocks** to work with existing records.
 
@@ -49,17 +55,39 @@ STATIC_TEXT_FILAMENT_PANEL=backoffice
 
 Use a non-tenant admin panel. For role-based access, register Laravel policies for `Plutuss\Models\Page` and `Plutuss\Models\PageItem` with the appropriate `viewAny`, `view`, `create`, and `update` permissions. The package manages shared site content.
 
-If you prefer to register the plugin in a panel provider, set `STATIC_TEXT_FILAMENT_PANEL=` to disable automatic registration and add `->plugin(\Plutuss\StaticTextFilament\StaticTextPlugin::make())` to the panel configuration.
+To register the plugin yourself, set `STATIC_TEXT_FILAMENT_PANEL=` to disable automatic registration. Add the plugin call to the existing chain in your panel provider's `panel()` method.
+
+```php
+return $panel
+    ->id('backoffice')
+    ->plugin(\Plutuss\StaticTextFilament\StaticTextPlugin::make());
+```
+
+To override the package configuration in PHP, publish it to `config/static-text-filament.php`.
+
+```sh
+php artisan vendor:publish --tag=static-text-filament-config
+```
 
 If the application uses cached configuration or Filament component discovery, refresh those caches after installing the package or changing its panel.
 
 ## Manage content
 
-- **Static Text → Pages** lists pages and block counts. Open a page to view or edit its name, slug, template and SEO fields. Use **Blocks** to open the block list filtered to that page.
+- **Static Text → Pages** lets you create, view, and edit pages. Each page has a name, a unique slug, a unique template, and optional SEO fields. The list shows block counts. Use **Blocks** to open the block list filtered to that page.
 - **Static Text → Blocks** lists content blocks and their owning pages. Create a block by choosing a page, naming the block, and adding fields. Each field has a key, a value and an optional type.
 - Use **View** to read the block fields. Expand **Stored JSON** to inspect the full payload, including metadata such as field IDs. Use **Edit** to change or reorder fields. Existing metadata stays attached to retained fields.
-- Localization uses suffixes such as `title_de`. Use a path relative to the disk configured by Static Text Laravel for `image` and `file` fields. The form edits the stored path.
+- Use keys such as `title_en` and `title_de` for translations. For `image` and `file` fields, enter a path relative to the disk configured by Static Text Laravel.
 - Block names are unique within a page. Each page keeps its own blocks even when names such as `header` are reused.
+
+### Render a block in Blade
+
+Create a block named `header` and add `title_en` and `title_de` fields. Pass the corresponding `Plutuss\Models\Page` instance to your Blade view as `$page`, then use the base field key. Static Text Laravel resolves the field for the application's active locale.
+
+```blade
+<h1>{{ $page->show('header:title') }}</h1>
+```
+
+See the upstream package for the rendering API and storage configuration. [Static Text Laravel](https://github.com/plutuss/static-text)
 
 ## Tests
 
